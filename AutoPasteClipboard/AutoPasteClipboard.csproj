@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>paste-settings-512.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="4.6.96" />
+    <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
+    <PackageReference Include="NHotkey.Wpf" Version="2.1.0" />
+  </ItemGroup>
+
+</Project>
