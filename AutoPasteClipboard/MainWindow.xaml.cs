@@ -44,6 +44,9 @@ namespace AutoPasteClipboard
                 }
             }
 
+            clipboardTexts.Reverse();
+            clipboardHistoryItems.Reverse();
+
             ClipboardListView.ItemsSource = clipboardTexts;
         }
 
