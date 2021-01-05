@@ -5,14 +5,15 @@
     <TargetFramework>net5.0-windows10.0.19041.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>paste-settings-512.ico</ApplicationIcon>
-    <Version>1.1.0</Version>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
+    <Version>2.0.0</Version>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="4.6.96" />
     <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
+    <PackageReference Include="LiteDB" Version="5.0.9" />
     <PackageReference Include="NHotkey.Wpf" Version="2.1.0" />
   </ItemGroup>
 

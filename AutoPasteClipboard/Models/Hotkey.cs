@@ -5,16 +5,12 @@ namespace AutoPasteClipboard
 {
     public class Hotkey
     {
-        public Key Key { get; }
+        public string Id { get; set; }
+        public Key Key { get; set; }
 
-        public ModifierKeys Modifiers { get; }
+        public ModifierKeys Modifiers { get; set; }
 
-        public Hotkey(Key key, ModifierKeys modifiers = ModifierKeys.None)
-        {
-            Key = key;
-            Modifiers = modifiers;
-        }
-
+        public Hotkey() { }
         public override string ToString()
         {
             if (Key == Key.None && Modifiers == ModifierKeys.None)
@@ -80,6 +76,8 @@ namespace AutoPasteClipboard
                     buffer.Append(Key);
                     break;
             }
+
+            Id = buffer.ToString();
 
             return buffer.ToString();
         }

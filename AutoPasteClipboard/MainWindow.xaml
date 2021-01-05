@@ -8,10 +8,18 @@
         Title="Auto Paste Clipboard" Height="450" Width="800" WindowStartupLocation="CenterScreen">
     <Viewbox StretchDirection="Both" Stretch="Uniform">
         <Grid>
-            <Label Content="History:" HorizontalAlignment="Left" Margin="-2,8,0,0" VerticalAlignment="Top"/>
-            <ListView x:Name="ClipboardListView" HorizontalAlignment="Center" VerticalAlignment="Top" Width="600" Height="250" Margin="0,32,0,0" />
+            <Label Content="History:" HorizontalAlignment="Left" Margin="-2,30,0,0" VerticalAlignment="Top"/>
+            <TextBox x:Name="ProfileNameTextBox" HorizontalAlignment="Left" Margin="20,11.5,0,0" VerticalAlignment="Top" Width="100"/>
+            <Button Content="Save/Update Clipboard" HorizontalAlignment="Left" Margin="124,10,0,0" VerticalAlignment="Top" Click="SaveClipboard" IsEnabled="{Binding ElementName=ProfileNameTextBox, Path=Text.Length, Mode=OneWay}"/>
+            <Button Content="Clear Clipboard" HorizontalAlignment="Left" Margin="255,10,0,0" VerticalAlignment="Top" Click="ClearClipboard"/>
+            <Label Content="Clipboards:" HorizontalAlignment="Left" Margin="360,8,0,0" VerticalAlignment="Top"/>
+            <ComboBox x:Name="ProfileComboBox" HorizontalAlignment="Left" Margin="433,10,0,0" VerticalAlignment="Top" Width="100" Height="20" SelectionChanged="UpdateClipboardOnProfileSelectionChanged"/>
+            <Button Content="Delete" HorizontalAlignment="Left" Margin="536,10,0,0" VerticalAlignment="Top" Click="DeleteProfile"/>
+            <xctk:BusyIndicator x:Name="Indicator">
+                <ListView x:Name="ClipboardListView" HorizontalAlignment="Center" VerticalAlignment="Top" Width="600" Height="240" Margin="0,54,0,0" Background="DimGray" Foreground="White" />
+            </xctk:BusyIndicator>
             <Label Content="Delimiter:" HorizontalAlignment="Left" Margin="-2,306,0,0" VerticalAlignment="Top"/>
-            <ComboBox x:Name="Delimiter" HorizontalAlignment="Left" Margin="60,308,0,0" VerticalAlignment="Top" Width="120">
+            <ComboBox x:Name="DelimiterComboBox" HorizontalAlignment="Left" Margin="60,308,0,0" VerticalAlignment="Top" Width="120">
                 <ComboBoxItem IsSelected="True">None</ComboBoxItem>
                 <ComboBoxItem>Tab</ComboBoxItem>
                 <ComboBoxItem>Enter</ComboBoxItem>
@@ -21,9 +29,9 @@
                 <ComboBoxItem>Comma &amp; Space</ComboBoxItem>
                 <ComboBoxItem>Period &amp; Space</ComboBoxItem>
             </ComboBox>
+            <local1:HotkeyEditorControl x:Name="HkTextBox"/>
             <xctk:SingleUpDown x:Name="Delay" HorizontalAlignment="Left" Margin="195,309,0,0" VerticalAlignment="Top" Width="70" Minimum="50" Value="500" DefaultValue="500"/>
             <Label Content="(ms) Paste Speed" HorizontalAlignment="Left" Margin="265,307,0,0" VerticalAlignment="Top"/>
-            <local1:HotkeyEditorControl x:Name="HkTextBox"/>
             <Button Content="Set Hotkey" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="520,307,0,0" Width="80" Click="SetHotkey"/>
         </Grid>
     </Viewbox>

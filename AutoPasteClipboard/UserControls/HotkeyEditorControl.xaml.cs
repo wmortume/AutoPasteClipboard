@@ -79,7 +79,7 @@ namespace AutoPasteClipboard.Controls
             }
 
             // Set value
-            Hotkey = new Hotkey(key, modifiers);
+            Hotkey = new Hotkey() { Key = key, Modifiers = modifiers};
         }
     }
 }
