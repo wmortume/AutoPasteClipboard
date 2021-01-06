@@ -20,18 +20,9 @@ namespace AutoPasteClipboard
     public partial class MainWindow : Window
     {
         readonly List<ClipboardHistoryItem> clipboardHistoryItems = new List<ClipboardHistoryItem>();
-        readonly string documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);         
-
+        readonly string documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         public MainWindow()
         {
-            Mutex mutex = new Mutex(true, "AutoPasteClipboard", out bool newInstance);
-
-            if (!newInstance)
-            {
-                MessageBox.Show("Application is already running.");
-                Application.Current.Shutdown();
-            }
-
             Clipboard.HistoryChanged += (object sender, ClipboardHistoryChangedEventArgs e) => { UpdateClipboardListView(); };
             Directory.CreateDirectory(Path.Combine(documents, "Auto Paste Clipboard"));
             InitializeComponent();
@@ -58,7 +49,7 @@ namespace AutoPasteClipboard
 
             ClipboardListView.ItemsSource = clipboardTexts;
 
-            foreach (object item in ClipboardListView.Items)
+            foreach (var item in ClipboardListView.Items)
             {
                 ((ListViewItem)item).Style = (Style)FindResource(resourceKey: "ListViewItemStyle");
             }
@@ -71,7 +62,7 @@ namespace AutoPasteClipboard
             {
                 if (ProfileComboBox.Items.Contains("Default"))
                 {
-                    UpdateProfileComboBox(false, ProfileComboBox.SelectedValue as string);
+                    UpdateProfileComboBox(false);
                 }
 
                 Clipboard.ClearHistory();
@@ -139,29 +130,22 @@ namespace AutoPasteClipboard
 
         private void SaveClipboard(object sender, RoutedEventArgs e)
         {
-            List<string> clipboard = new List<string>();
-
-            foreach (ListViewItem item in ClipboardListView.Items)
-            {
-                clipboard.Add(item.Content as string);
-            }
-
             if (ClipboardListView.Items.Count != 0)
             {
-                ClipboardProfile clipboardProfile = new ClipboardProfile
+                ClipboardProfile clipboard = new ClipboardProfile
                 {
                     Profile = ProfileNameTextBox.Text,
-                    Clipboard = clipboard
+                    Clipboard = (List<string>)ClipboardListView.ItemsSource
                 };
 
                 using (LiteDatabase db = new LiteDatabase(Path.Combine(documents, "Auto Paste Clipboard", "data.db")))
                 {
                     ILiteCollection<ClipboardProfile> collection = db.GetCollection<ClipboardProfile>("clipboard");
 
-                    collection.Upsert(clipboardProfile); //update or insert
+                    collection.Upsert(clipboard); //update or insert
                 }
 
-                UpdateProfileComboBox(false, clipboardProfile.Profile);
+                UpdateProfileComboBox(false, clipboard.Profile);
             }
         }
 

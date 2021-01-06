@@ -13,8 +13,8 @@
             <Button Content="Save/Update Clipboard" HorizontalAlignment="Left" Margin="124,10,0,0" VerticalAlignment="Top" Click="SaveClipboard" IsEnabled="{Binding ElementName=ProfileNameTextBox, Path=Text.Length, Mode=OneWay}"/>
             <Button Content="Clear Clipboard" HorizontalAlignment="Left" Margin="255,10,0,0" VerticalAlignment="Top" Click="ClearClipboard"/>
             <Label Content="Clipboards:" HorizontalAlignment="Left" Margin="360,8,0,0" VerticalAlignment="Top"/>
-            <ComboBox x:Name="ProfileComboBox" HorizontalAlignment="Left" Margin="433,10,0,0" VerticalAlignment="Top" Width="100" Height="22" SelectionChanged="UpdateClipboardOnProfileSelectionChanged"/>
-            <Button Content="Delete" HorizontalAlignment="Left" Margin="536,11,0,0" VerticalAlignment="Top" Click="DeleteProfile"/>
+            <ComboBox x:Name="ProfileComboBox" HorizontalAlignment="Left" Margin="433,10,0,0" VerticalAlignment="Top" Width="100" Height="20" SelectionChanged="UpdateClipboardOnProfileSelectionChanged"/>
+            <Button Content="Delete" HorizontalAlignment="Left" Margin="536,10,0,0" VerticalAlignment="Top" Click="DeleteProfile"/>
             <xctk:BusyIndicator x:Name="Indicator">
                 <ListView x:Name="ClipboardListView" HorizontalAlignment="Center" VerticalAlignment="Top" Width="600" Height="240" Margin="0,54,0,0" Background="DimGray" Foreground="White" />
             </xctk:BusyIndicator>
