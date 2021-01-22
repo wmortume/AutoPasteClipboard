@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Windows.ApplicationModel.DataTransfer;
 using WindowsInput;
 using WindowsInput.Native;
@@ -19,19 +20,12 @@ namespace AutoPasteClipboard
 {
     public partial class MainWindow : Window
     {
+        CancellationTokenSource CTS;
         readonly List<ClipboardHistoryItem> clipboardHistoryItems = new List<ClipboardHistoryItem>();
-        readonly string documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);         
+        readonly string documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
         public MainWindow()
         {
-            Mutex mutex = new Mutex(true, "AutoPasteClipboard", out bool newInstance);
-
-            if (!newInstance)
-            {
-                MessageBox.Show("Application is already running.");
-                Application.Current.Shutdown();
-            }
-
             Clipboard.HistoryChanged += (object sender, ClipboardHistoryChangedEventArgs e) => { UpdateClipboardListView(); };
             Directory.CreateDirectory(Path.Combine(documents, "Auto Paste Clipboard"));
             InitializeComponent();
@@ -177,7 +171,16 @@ namespace AutoPasteClipboard
                 {
                     Hotkey hotkey = collection.FindById(collection.Min());
                     HkTextBox.Hotkey = hotkey;
-                    HotkeyManager.Current.AddOrReplace("Paste", HkTextBox.Hotkey.Key, HkTextBox.Hotkey.Modifiers, AutoPaste);
+                    try
+                    {
+                        HotkeyManager.Current.AddOrReplace("Paste", HkTextBox.Hotkey.Key, HkTextBox.Hotkey.Modifiers, AutoPaste);
+                        HotkeyManager.Current.AddOrReplace("CancelPaste", Key.Delete, ModifierKeys.Control, CancelPaste);
+                    }
+                    catch (HotkeyAlreadyRegisteredException)
+                    {
+                        MessageBox.Show("Application is already running or hotkeys are set to be used by another one.");
+                        Application.Current.Shutdown();
+                    }
                 }
             }
         }
@@ -218,48 +221,88 @@ namespace AutoPasteClipboard
             }
         }
 
-        private void AutoPaste(object sender, HotkeyEventArgs e)
+        private async void AutoPaste(object sender, HotkeyEventArgs e)
         {
-            if (WindowState != WindowState.Minimized)
+            try
             {
-                WindowState = WindowState.Minimized;
-                Thread.Sleep(TimeSpan.FromSeconds(1));
-            }
-            InputSimulator input = new InputSimulator();
+                CTS = new CancellationTokenSource();
+                CancellationToken cancelToken = CTS.Token;
 
-            for (int i = 0; i < clipboardHistoryItems.Count; i++)
-            {
-                Clipboard.SetHistoryItemAsContent(clipboardHistoryItems[i]);
-                input.Keyboard.Sleep((int)Delay.Value).ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_V);
-
-                switch (DelimiterComboBox.SelectedIndex)
+                if (WindowState != WindowState.Minimized)
                 {
-                    case 1:
-                        input.Keyboard.Sleep((int)Delay.Value).KeyPress(VirtualKeyCode.TAB);
-                        break;
-                    case 2:
-                        input.Keyboard.Sleep((int)Delay.Value).KeyPress(VirtualKeyCode.RETURN);
-                        break;
-                    case 3:
-                        input.Keyboard.Sleep((int)Delay.Value).KeyPress(VirtualKeyCode.SPACE);
-                        break;
-                    case 4:
-                        input.Keyboard.Sleep((int)Delay.Value).KeyPress(VirtualKeyCode.OEM_COMMA);
-                        break;
-                    case 5:
-                        input.Keyboard.Sleep((int)Delay.Value).KeyPress(VirtualKeyCode.OEM_PERIOD);
-                        break;
-                    case 6:
-                        input.Keyboard.Sleep((int)Delay.Value).KeyPress(VirtualKeyCode.OEM_COMMA).Sleep((int)Delay.Value).KeyPress(VirtualKeyCode.SPACE);
-                        break;
-                    case 7:
-                        input.Keyboard.Sleep((int)Delay.Value).KeyPress(VirtualKeyCode.OEM_PERIOD).Sleep((int)Delay.Value).KeyPress(VirtualKeyCode.SPACE);
-                        break;
-                    default:
-                        break;
+                    WindowState = WindowState.Minimized;
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancelToken);
+                }
+
+                InputSimulator input = new InputSimulator();
+
+                for (int i = 0; i < clipboardHistoryItems.Count; i++)
+                {
+                    Clipboard.SetHistoryItemAsContent(clipboardHistoryItems[i]);
+                    await Task.Delay((int)Delay.Value, cancelToken);
+                    input.Keyboard.ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_V);
+
+                    switch (DelimiterComboBox.SelectedIndex)
+                    {
+                        case 1:
+                            await Task.Delay((int)Delay.Value, cancelToken);
+                            input.Keyboard.KeyPress(VirtualKeyCode.TAB);
+                            break;
+                        case 2:
+                            await Task.Delay((int)Delay.Value, cancelToken);
+                            input.Keyboard.KeyPress(VirtualKeyCode.RETURN);
+                            break;
+                        case 3:
+                            await Task.Delay((int)Delay.Value, cancelToken);
+                            input.Keyboard.KeyPress(VirtualKeyCode.SPACE);
+                            break;
+                        case 4:
+                            await Task.Delay((int)Delay.Value, cancelToken);
+                            input.Keyboard.KeyPress(VirtualKeyCode.OEM_COMMA);
+                            break;
+                        case 5:
+                            await Task.Delay((int)Delay.Value, cancelToken);
+                            input.Keyboard.KeyPress(VirtualKeyCode.OEM_PERIOD);
+                            break;
+                        case 6:
+                            await Task.Delay((int)Delay.Value, cancelToken);
+                            input.Keyboard.KeyPress(VirtualKeyCode.OEM_COMMA);
+                            await Task.Delay((int)Delay.Value, cancelToken);
+                            input.Keyboard.KeyPress(VirtualKeyCode.SPACE);
+                            break;
+                        case 7:
+                            await Task.Delay((int)Delay.Value, cancelToken);
+                            input.Keyboard.KeyPress(VirtualKeyCode.OEM_PERIOD);
+                            await Task.Delay((int)Delay.Value, cancelToken);
+                            input.Keyboard.KeyPress(VirtualKeyCode.SPACE);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                e.Handled = true;
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) //handles async exceptions
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                if (CTS != null)
+                {
+                    CTS.Dispose();
+                    CTS = null;
                 }
             }
+        }
 
+        private void CancelPaste(object sender, HotkeyEventArgs e)
+        {
+            if (CTS != null)
+            {
+                CTS.Cancel();
+            }
             e.Handled = true;
         }
     }
