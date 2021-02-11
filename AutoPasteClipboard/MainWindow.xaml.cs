@@ -26,7 +26,7 @@ namespace AutoPasteClipboard
 
         public MainWindow()
         {
-            Clipboard.HistoryChanged += (object sender, ClipboardHistoryChangedEventArgs e) => { UpdateClipboardListView(); };
+            Clipboard.HistoryChanged += (object sender, ClipboardHistoryChangedEventArgs e) => { UpdateClipboardListView(); UndoChangesBtn.IsEnabled = ProfileComboBox.SelectedValue as string != "Default"; };
             Directory.CreateDirectory(Path.Combine(documents, "Auto Paste Clipboard"));
             InitializeComponent();
             UpdateClipboardListView();
@@ -58,10 +58,23 @@ namespace AutoPasteClipboard
             }
         }
 
-        private async void UpdateClipboardOnProfileSelectionChanged(object sender, EventArgs e)
+        private void UpdateClipboardOnProfileSelectionChanged(object sender, EventArgs e)
+        {
+            if (ProfileComboBox.Text != ProfileComboBox.SelectedValue as string) //makes sure it doesn't update if selection hasn't changed
+            {
+                UpdateClipboard();
+            }
+        }
+
+        private void UndoClipboardChanges(object sender, RoutedEventArgs e)
+        {
+            UpdateClipboard();
+        }
+
+        private async void UpdateClipboard()
         {
             Indicator.IsBusy = true;
-            if (ProfileComboBox.IsLoaded && ProfileComboBox.SelectedValue != null && ProfileComboBox.Text != ProfileComboBox.SelectedValue as string && ProfileComboBox.SelectedValue as string != "Default")
+            if (ProfileComboBox.IsLoaded && ProfileComboBox.SelectedValue != null && ProfileComboBox.SelectedValue as string != "Default")
             {
                 if (ProfileComboBox.Items.Contains("Default"))
                 {
@@ -83,10 +96,16 @@ namespace AutoPasteClipboard
                         Clipboard.SetContent(data);
                         await Task.Delay(450);
                     }
+
+                    DelimiterComboBox.SelectedIndex = clipboardProfile.Delimeter;
+                    DelayUpDownBox.Value = clipboardProfile.Delay;
+                    ProfileNameTextBox.Text = ProfileComboBox.SelectedValue as string;
                 }
             }
+            UndoChangesBtn.IsEnabled = false;
             Indicator.IsBusy = false;
         }
+
 
         private void UpdateProfileComboBox(bool addDefaultProfile, string currentDropDownProfile = null)
         {
@@ -145,21 +164,32 @@ namespace AutoPasteClipboard
                 ClipboardProfile clipboardProfile = new ClipboardProfile
                 {
                     Profile = ProfileNameTextBox.Text,
-                    Clipboard = clipboard
+                    Clipboard = clipboard,
+                    Delimeter = DelimiterComboBox.SelectedIndex,
+                    Delay = (int)DelayUpDownBox.Value
                 };
 
                 using (LiteDatabase db = new LiteDatabase(Path.Combine(documents, "Auto Paste Clipboard", "data.db")))
                 {
                     ILiteCollection<ClipboardProfile> collection = db.GetCollection<ClipboardProfile>("clipboard");
 
+                    if (collection.Exists(c => c.Profile == clipboardProfile.Profile))
+                    {
+                        MessageBox.Show("Clipboard has successfully been updated.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
                     collection.Upsert(clipboardProfile); //update or insert
                 }
 
                 UpdateProfileComboBox(false, clipboardProfile.Profile);
+                UndoChangesBtn.IsEnabled = false;
+            }
+            else
+            {
+                MessageBox.Show("There's nothing to save. Try copying a text for it to appear on here.", "Alert", MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
         }
 
-        private void ClearClipboard(object sender, RoutedEventArgs e) { Clipboard.ClearHistory(); }
+        private void ClearClipboard(object sender, RoutedEventArgs e) { Clipboard.ClearHistory(); UndoChangesBtn.IsEnabled = false; }
 
         private void LoadHotkey()
         {
@@ -178,7 +208,7 @@ namespace AutoPasteClipboard
                     }
                     catch (HotkeyAlreadyRegisteredException)
                     {
-                        MessageBox.Show("Application is already running or hotkeys are set to be used by another one.");
+                        MessageBox.Show("Application is already running or hotkeys are set to be used by another one.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         Application.Current.Shutdown();
                     }
                 }
@@ -207,7 +237,7 @@ namespace AutoPasteClipboard
                     }
 
                     HotkeyManager.Current.AddOrReplace("Paste", HkTextBox.Hotkey.Key, HkTextBox.Hotkey.Modifiers, AutoPaste);
-                    MessageBox.Show($"{hotkey} has been successfully set as the hotkey.");
+                    MessageBox.Show($"{hotkey} has been successfully set as the hotkey.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                     WindowState = WindowState.Minimized;
                 }
                 catch (HotkeyAlreadyRegisteredException)
@@ -239,41 +269,41 @@ namespace AutoPasteClipboard
                 for (int i = 0; i < clipboardHistoryItems.Count; i++)
                 {
                     Clipboard.SetHistoryItemAsContent(clipboardHistoryItems[i]);
-                    await Task.Delay((int)Delay.Value, cancelToken);
+                    await Task.Delay((int)DelayUpDownBox.Value, cancelToken);
                     input.Keyboard.ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_V);
 
                     switch (DelimiterComboBox.SelectedIndex)
                     {
                         case 1:
-                            await Task.Delay((int)Delay.Value, cancelToken);
+                            await Task.Delay((int)DelayUpDownBox.Value, cancelToken);
                             input.Keyboard.KeyPress(VirtualKeyCode.TAB);
                             break;
                         case 2:
-                            await Task.Delay((int)Delay.Value, cancelToken);
+                            await Task.Delay((int)DelayUpDownBox.Value, cancelToken);
                             input.Keyboard.KeyPress(VirtualKeyCode.RETURN);
                             break;
                         case 3:
-                            await Task.Delay((int)Delay.Value, cancelToken);
+                            await Task.Delay((int)DelayUpDownBox.Value, cancelToken);
                             input.Keyboard.KeyPress(VirtualKeyCode.SPACE);
                             break;
                         case 4:
-                            await Task.Delay((int)Delay.Value, cancelToken);
+                            await Task.Delay((int)DelayUpDownBox.Value, cancelToken);
                             input.Keyboard.KeyPress(VirtualKeyCode.OEM_COMMA);
                             break;
                         case 5:
-                            await Task.Delay((int)Delay.Value, cancelToken);
+                            await Task.Delay((int)DelayUpDownBox.Value, cancelToken);
                             input.Keyboard.KeyPress(VirtualKeyCode.OEM_PERIOD);
                             break;
                         case 6:
-                            await Task.Delay((int)Delay.Value, cancelToken);
+                            await Task.Delay((int)DelayUpDownBox.Value, cancelToken);
                             input.Keyboard.KeyPress(VirtualKeyCode.OEM_COMMA);
-                            await Task.Delay((int)Delay.Value, cancelToken);
+                            await Task.Delay((int)DelayUpDownBox.Value, cancelToken);
                             input.Keyboard.KeyPress(VirtualKeyCode.SPACE);
                             break;
                         case 7:
-                            await Task.Delay((int)Delay.Value, cancelToken);
+                            await Task.Delay((int)DelayUpDownBox.Value, cancelToken);
                             input.Keyboard.KeyPress(VirtualKeyCode.OEM_PERIOD);
-                            await Task.Delay((int)Delay.Value, cancelToken);
+                            await Task.Delay((int)DelayUpDownBox.Value, cancelToken);
                             input.Keyboard.KeyPress(VirtualKeyCode.SPACE);
                             break;
                         default:
